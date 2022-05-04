@@ -1,0 +1,26 @@
+version: "2.3"
+# note: a default network is created between the containers:
+#   https://docs.docker.com/compose/networking/
+#   sudo docker network inspect personalpedia_default
+
+services:
+  # flask container config:
+  flask:
+    build:
+      context: ../flask
+      # location of dockerfile (relative to context path above):
+      dockerfile: ../docker/flask/Dockerfile
+      target: flask_prod
+    environment:
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+      - REDIRECT_URL=${REDIRECT_URL}
+    volumes:
+      # variables used in this file must be defined in a '.env' file
+      - ${SAVE_DIR}:/app/data
+    ports:
+      #- "HOST:CONTAINER"
+      - "80:5000"
+
+    command: bash -c 'cd /app && uwsgi --ini app.ini'
+    #command: bash -c 'sleep 1d'

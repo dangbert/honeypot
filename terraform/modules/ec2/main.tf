@@ -10,6 +10,7 @@ data "aws_ami" "amazon-linux-2" {
 }
 
 # ec2 instance
+# TODO: check/control its disk space size?
 resource "aws_instance" "this" {
   ami                         = data.aws_ami.amazon-linux-2.id
   associate_public_ip_address = true

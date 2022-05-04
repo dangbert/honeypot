@@ -1,0 +1,7 @@
+# files to ignore relative to this build context (directory)
+.dockerignore
+
+*.sock
+env/
+**/__pycache__
+data/
