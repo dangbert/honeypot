@@ -17,6 +17,8 @@ sudo docker image save honey_flask -o image.tar
 sudo chmod 664 image.tar
 
 scp -i ../terraform/honey-key.pem -r `pwd`  ec2-user@<EC2_IP>
+# specific updates later:
+scp -i ../terraform/honey-key.pem  *.tar  ec2-user@<EC2_IP>:docker
 ````
 
 On ec2 instance:

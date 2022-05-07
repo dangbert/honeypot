@@ -64,9 +64,30 @@ def report():
   if not CTX.verify(password, PW_HASH):
     abort(404)
 
-  # return all tracked data
+
+  # read all tracked data
   allData = []
   for fname in glob.glob(os.path.join(SAVE_DIR, '*.json')):
        with open(fname) as f:
             allData.append(json.load(f))
+
+  print(f"\nread {len(allData)} total data entries")
+
+  # optionally filter by a desired token
+  token = request.args.get('t')
+  if token:
+    if token == 'null':
+      token = None # allow ability to explicitly search for null tokens
+    print(f"filtering by token {token}")
+    allData = list(filter(lambda x: x['token'] == token, allData))
+
+  # optionally filter by link
+  path = request.args.get('path')
+  if path:
+    print(f"filtering by path {path}")
+    allData = list(filter(lambda x: x['path'] == path, allData))
+
+  # sort by date (showing most recent first)
+  allData = sorted(allData, key=lambda x: -1 * x['dateEpoch'])
+  print(f"returning {len(allData)} entries")
   return jsonify(allData), 200
