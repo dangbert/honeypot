@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+DOCKER_COMPOSE_VER="1.29.2"
+#DOCKER_COMPOSE_VER="v2.16.0" # causes issue where "up" requires build on server
+
 function main() {
   # if args:
   while getopts "r" arg; do
@@ -28,7 +31,7 @@ function main() {
 function ensure_docker {
   if [[ ! `command -v docker` || ! `command -v docker-compose` ]]; then
     sudo yum install -y docker
-    sudo curl -L "https://github.com/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
+    sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VER}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
     sudo chmod a+x /usr/bin/docker-compose
     sudo systemctl enable docker && sudo systemctl start docker
   else
@@ -55,6 +58,8 @@ function redeploy() {
   sudo docker load < image.tar
   mkdir -p ../flask # prevent docker-compose error
   sudo docker-compose up -d
+
+  #sudo docker run --rm -p 80:5000 --name honey honey_flask:latest python
 }
 
 main "$@"

@@ -1,6 +1,6 @@
 locals {
-  # use name of this folder as prefix for resource names
-  prefix = basename(abspath(path.module))
+  # use name of this folder as namespace / prefix for resource names
+  prefix = "honey-${basename(abspath(path.module))}"
 
   # AWS params:
   region = "eu-central-1"
@@ -15,13 +15,13 @@ provider "aws" {
 
 
 module "ssh-key" {
-  source    = "../../modules/ssh-key"
-  prefix = "honey"
+  source = "../../modules/ssh-key"
+  prefix = local.prefix
 }
 
 module "ec2" {
   source     = "../../modules/ec2"
-  prefix      = "honey"
+  prefix     = local.prefix
   key_name   = module.ssh-key.key_name
 }
 
@@ -29,9 +29,13 @@ module "ec2" {
 output "data" {
   value = {
     ec2 = module.ec2
+    site = {
+      url = "http://${module.ec2.public_ip}/"
+    }
     ssh = {
       ssh = "ssh -i ${module.ssh-key.key_name}.pem ec2-user@${module.ec2.public_ip}"
-      scp = "scp -i ${module.ssh-key.key_name}.pem file.txt ec2-user@${module.ec2.public_ip}:"
+      # example scp command:
+      scp = "scp -i ${module.ssh-key.key_name}.pem '${abspath("../../modules/ec2/setup.sh")}' ec2-user@${module.ec2.public_ip}:"
       remote = "ec2-user@${module.ec2.public_ip}"
       key = abspath("${module.ssh-key.key_name}.pem")
     }

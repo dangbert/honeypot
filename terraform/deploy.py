@@ -5,6 +5,7 @@ import sys
 import subprocess
 import json
 from typing import List
+import shutil
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) 
 INSTANCES_DIR = os.path.join(SCRIPT_DIR, 'instances')
@@ -16,7 +17,7 @@ def main():
 
     parser.add_argument('-b', '--build', action="store_true", help="build docker image")
     parser.add_argument('-p', '--push', action="store_true", help="push docker image to server, and restart website")
-    #parser.add_argument('--ssh', action="store_true", help="ssh into server")
+    parser.add_argument('--ssh', action="store_true", help="ssh into server")
     #parser.add_argument('-s', '--stop', action="store_true", help="stop EC2 instance")
 
     args = parser.parse_args()
@@ -32,6 +33,7 @@ def main():
 
     ops = 0 # num operations performed
     if args.build:
+        ensureEnv(DOCKER_DIR)
         print(f"building docker image...")
         runCmd(['sudo', 'docker-compose', 'build'], cwd=DOCKER_DIR)
         print(f"exporting image to tar file...")
@@ -43,8 +45,7 @@ def main():
         fname = os.path.join(DOCKER_DIR, 'image.tar')
         assert(os.path.exists(fname))
         print(f"copying to server: '{fname}'")
-        import pdb; pdb.set_trace()
-        print(f"copying docker resources to server...")
+        print(f"copying docker resources to server...\n")
         # copy just image.tar
         #runCmd(['scp', '-i', data['ssh']['key'], fname, f"{data['ssh']['remote']}:"], cwd=tfDir)
 
@@ -54,7 +55,8 @@ def main():
 
     if args.ssh:
         # TODO: not currently working (terminal output not visible)
-        runCmd(['ssh', '-i', data['ssh']['key'], data['ssh']['remote']], cwd=tfDir, verbose=True)
+        print(f"this command isn't fully supported, but you can manually run:")
+        runCmd(['ssh', '-i', data['ssh']['key'], data['ssh']['remote']], cwd=tfDir, verbose=True, dryRun=True)
         ops += 1
 
     if ops == 0:
@@ -82,6 +84,19 @@ def runCmd(cmd: List[str], cwd='.', verbose=False, dryRun=False):
         print(f"***command failed with code {res.returncode}")
         print(" ".join(cmd))
     return res.returncode
+
+def ensureEnv(dockerDir: str):
+    """Ensure .env file exists"""
+    envPath = os.path.join(dockerDir, '.env')
+    if os.path.exists(envPath):
+        return
+
+    templateEnv = os.path.join(dockerDir, '.env.sample')
+    assert os.path.exists(templateEnv)
+
+    shutil.copy(templateEnv, envPath)
+    print(f"\ncreated default .env file: '{envPath}'")
+    input("Edit this file if desired then press Enter to continue...")
 
         
 if __name__ == "__main__":

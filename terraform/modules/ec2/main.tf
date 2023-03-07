@@ -27,7 +27,7 @@ resource "aws_instance" "this" {
   # copy setup.sh to EC2
   provisioner "file" {
     source      = "${path.module}/setup.sh"
-    destination = "~/setup.sh"
+    destination = "/home/ec2-user/setup.sh"
     connection {
       type        = "ssh"
       user        = "ec2-user"
