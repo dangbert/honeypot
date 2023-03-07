@@ -1,41 +1,30 @@
 # Setup:
 
+1. Launch EC2 instance with necessary dependencies:
 ````bash
-cd terraform
+cd terraform/instances/example
 terraform init
 terraform apply
 ````
 
-
+2. Build docker image
 ````bash
-cd docker
-cp .env.sample .env
-sudo docker-compose build
+cd docker && cp .env.sample .env
 
-# export image
-sudo docker image save honey_flask -o image.tar
-sudo chmod 664 image.tar
-
-scp -i ../terraform/honey-key.pem -r `pwd`  ec2-user@<EC2_IP>
-# specific updates later:
-scp -i ../terraform/honey-key.pem  *.tar  ec2-user@<EC2_IP>:docker
+cd ../terraform
+# build and export docker image to image.tar
+# and copy docker folder to server
+./deploy.py example --build --push
 ````
 
-On ec2 instance:
-
-(note this could be a setup.sh script that terraform runs on the instance)
+3. Start service on server:
 ````bash
-sudo yum update && sudo yum install -y docker
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
-sudo chmod a+x /usr/bin/docker-compose
-sudo systemctl enable docker && sudo systemctl start docker
+# from terraform directory
+cd example
+terraform output
 
-# enter folder that was copied through scp:
-cd docker/
-sudo docker load < image.tar
-mkdir ../flask # prevent docker-compose error
-
-sudo docker-compose up
+# now use ssh command outputted to enter server and (re)start website with:
+./setup.py -r
 
 #sudo docker run --rm -p 80:5000 --name honey honey_flask:latest python
 ````

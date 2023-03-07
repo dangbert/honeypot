@@ -24,11 +24,10 @@ resource "aws_instance" "this" {
     "Name" = "${var.prefix}-PUBLIC"
   }
 
-  # Copies the ssh key file to home dir
+  # copy setup.sh to EC2
   provisioner "file" {
-    source      = "./${var.key_name}.pem"
-    destination = "/home/ec2-user/${var.key_name}.pem"
-
+    source      = "${path.module}/setup.sh"
+    destination = "~/setup.sh"
     connection {
       type        = "ssh"
       user        = "ec2-user"
@@ -36,18 +35,26 @@ resource "aws_instance" "this" {
       host        = self.public_ip
     }
   }
-  
-  //chmod key 400 on EC2 instance
-  provisioner "remote-exec" {
-    inline = ["chmod 400 ~/${var.key_name}.pem"]
 
+  # provisioner "remote-exec" {
+  #   inline = ["chmod 755 ~/setup.sh"]
+  #   connection {
+  #     type        = "ssh"
+  #     user        = "ec2-user"
+  #     private_key = file("${var.key_name}.pem")
+  #     host        = self.public_ip
+  #   }
+  # }
+  
+  # run setup script for installing desired software on EC2
+  provisioner "remote-exec" {
+    script = "${path.module}/setup.sh"
     connection {
       type        = "ssh"
       user        = "ec2-user"
       private_key = file("${var.key_name}.pem")
       host        = self.public_ip
     }
-
   }
 }
 
@@ -56,7 +63,7 @@ resource "aws_security_group" "ec2" {
   name = "${var.prefix}-ec2-sg"
   #vpc_id = lookup(var.awsprops, "vpc")
 
-  // To Allow SSH Transport
+  # allow SSH Transport
   ingress {
     from_port = 22
     protocol = "tcp"
@@ -64,7 +71,7 @@ resource "aws_security_group" "ec2" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  // To Allow Port 80 Transport
+  # allow Port 80 Transport
   ingress {
     from_port = 80
     protocol = "tcp"
